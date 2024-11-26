@@ -1,4 +1,5 @@
 const express = require("express");
+const Fuse = require("fuse.js");
 const { PrismaClient } = require("@prisma/client");
 const errorHandler = require("../middleware/errorHandler");
 
@@ -9,6 +10,19 @@ router.get("/", async (req, res) => {
   try {
     const tasks = await prisma.task.findMany();
     res.json(tasks);
+  } catch (error) {
+    errorHandler(res, error);
+  }
+});
+
+router.get("/search", async (req, res) => {
+  const { query } = req.query;
+
+  try {
+    const tasks = await prisma.task.findMany();
+    const fuse = new Fuse(tasks, { keys: ["title", "color"] });
+    const results = fuse.search(query);
+    res.json(results.map(result => result.item));
   } catch (error) {
     errorHandler(res, error);
   }
